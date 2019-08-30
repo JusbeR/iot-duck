@@ -27,7 +27,7 @@ void setup()
 {
   for(int i=0; i<NO_OF_TEMP_SENSORS; i++) { temperatures[i] = 0; }
   sensors.begin();
-  Serial.begin(9600);
+  Serial.begin(115200);
   Heltec.begin(true /*DisplayEnable Enable*/, false /*LoRa Disable*/, false /*Serial Enable*/);
 
   Heltec.display->flipScreenVertically();
