@@ -8,9 +8,9 @@
 #include "heltec.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include "batt.h"
 
 #define ONE_WIRE_BUS 17
-#define BATT_SENSE_PIN 36
 #define NO_OF_TEMP_SENSORS 3
 
 // Sensors are always read in same order and this list
@@ -52,14 +52,17 @@ String buildTemperatureString(){
   for(int i=0; i<NO_OF_TEMP_SENSORS; i++) {
     temperatureString += String(temperatures[i], 1);
     if((i+1)<NO_OF_TEMP_SENSORS) {
-      temperatureString += String(", ");
+      temperatureString += String("  ");
     }
   }
   return temperatureString;
 }
 
 String buildVoltageString(){
-  return String(battVoltage, 3) + "V";
+  if(is_avg_batt_voltage_ready()) {
+    return String(get_avg_batt_voltage()) + "mV";
+  }
+  return String("????mV");
 }
 
 void draw() {
@@ -69,7 +72,7 @@ void draw() {
     Heltec.display->drawString(25, 10, String(getAvgTemp(), 2) + String("C"));
     Heltec.display->setFont(ArialMT_Plain_10);
     Heltec.display->drawString(5, 40, buildTemperatureString());
-    Heltec.display->drawString(90, 40, buildVoltageString());
+    Heltec.display->drawString(88, 40, buildVoltageString());
     Heltec.display->display();
 }
 
@@ -97,16 +100,9 @@ void readTemperatures(){
   Serial.println("C");
 }
 
-void readBattVoltage() {
-    int adcResult = analogRead(BATT_SENSE_PIN); //read pin A0 value
-    Serial.printf("ADC: %d\n", adcResult);
-    battVoltage = adcResult * (3.3 / 4095.0)*2;
-    Serial.printf("battVoltage: %f\n", battVoltage);
-}
-
 void loop()
 {
-  readBattVoltage();
+  sample_batt_level();
   readTemperatures();
   draw();
   delay(2000);
