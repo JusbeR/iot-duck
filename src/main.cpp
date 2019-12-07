@@ -10,9 +10,16 @@
 #include <DallasTemperature.h>
 
 #define ONE_WIRE_BUS 17
-#define NO_OF_TEMP_SENSORS 4
+#define BATT_SENSE_PIN 36
+#define NO_OF_TEMP_SENSORS 3
+
+// Sensors are always read in same order and this list
+// puts them so that bottom sensor is always in the first place
+// and top sensor in last
+uint8_t sensor_index_to_disp_index[3] = {1,2,0};
 
 float temperatures[NO_OF_TEMP_SENSORS];
+float battVoltage = 0.0f;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
@@ -51,13 +58,18 @@ String buildTemperatureString(){
   return temperatureString;
 }
 
-void drawTemperatures() {
+String buildVoltageString(){
+  return String(battVoltage, 3) + "V";
+}
+
+void draw() {
     Heltec.display->clear();
     Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
     Heltec.display->setFont(ArialMT_Plain_24);
     Heltec.display->drawString(25, 10, String(getAvgTemp(), 2) + String("C"));
     Heltec.display->setFont(ArialMT_Plain_10);
     Heltec.display->drawString(5, 40, buildTemperatureString());
+    Heltec.display->drawString(90, 40, buildVoltageString());
     Heltec.display->display();
 }
 
@@ -77,7 +89,7 @@ void readTemperatures(){
       Serial.println(tempC);
       if(tempC>greatest) { greatest = tempC; }
       if(tempC<smallest) { smallest = tempC; }
-      temperatures[i] = tempC;
+      temperatures[sensor_index_to_disp_index[i]] = tempC;
     }
   }
   Serial.print("Greatest diff is ");
@@ -85,9 +97,17 @@ void readTemperatures(){
   Serial.println("C");
 }
 
+void readBattVoltage() {
+    int adcResult = analogRead(BATT_SENSE_PIN); //read pin A0 value
+    Serial.printf("ADC: %d\n", adcResult);
+    battVoltage = adcResult * (3.3 / 4095.0)*2;
+    Serial.printf("battVoltage: %f\n", battVoltage);
+}
+
 void loop()
 {
+  readBattVoltage();
   readTemperatures();
-  drawTemperatures();
+  draw();
   delay(2000);
 }
