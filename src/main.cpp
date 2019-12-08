@@ -12,12 +12,18 @@
 
 #define ONE_WIRE_BUS 17
 #define NO_OF_TEMP_SENSORS 3
+#define BUTTON_PIN 0
+#define MODE_SCREEN_OFF 0
+#define MODE_SCREEN_ON  1
+#define MODE_DEFAULT     MODE_SCREEN_ON
 
 // Sensors are always read in same order and this list
 // puts them so that bottom sensor is always in the first place
 // and top sensor in last
 uint8_t sensor_index_to_disp_index[3] = {1,2,0};
 
+static volatile uint8_t screenMode;
+static volatile bool screenModeChanged;
 float temperatures[NO_OF_TEMP_SENSORS];
 float battVoltage = 0.0f;
 OneWire oneWire(ONE_WIRE_BUS);
@@ -30,15 +36,33 @@ void printAddress(DeviceAddress deviceAddress) {
   }
 }
 
+void buttonPressed() {
+  Serial.printf("MODE=%u\n", screenMode);
+  if(screenMode == MODE_SCREEN_ON) {
+    Serial.print("Setting screen mode OFF\n");
+    screenMode = MODE_SCREEN_OFF;
+    screenModeChanged = true;
+  } else {
+    Serial.print("Setting screen mode ON\n");
+    screenMode = MODE_SCREEN_ON;
+    screenModeChanged = true;
+  }
+}
+
 void setup()
 {
   for(int i=0; i<NO_OF_TEMP_SENSORS; i++) { temperatures[i] = 0; }
   sensors.begin();
   Serial.begin(115200);
   Heltec.begin(true /*DisplayEnable Enable*/, false /*LoRa Disable*/, false /*Serial Enable*/);
-
+  delay(1000);
+  screenMode = MODE_DEFAULT;
+  screenModeChanged = false;
   Heltec.display->flipScreenVertically();
   Heltec.display->setFont(ArialMT_Plain_10);
+
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPressed, RISING);
 }
 
 float getAvgTemp() {
@@ -66,14 +90,16 @@ String buildVoltageString(){
 }
 
 void draw() {
-    Heltec.display->clear();
-    Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
-    Heltec.display->setFont(ArialMT_Plain_24);
-    Heltec.display->drawString(25, 10, String(getAvgTemp(), 2) + String("C"));
-    Heltec.display->setFont(ArialMT_Plain_10);
-    Heltec.display->drawString(5, 40, buildTemperatureString());
-    Heltec.display->drawString(88, 40, buildVoltageString());
-    Heltec.display->display();
+    if(screenMode == MODE_SCREEN_ON) {
+      Heltec.display->clear();
+      Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
+      Heltec.display->setFont(ArialMT_Plain_24);
+      Heltec.display->drawString(25, 10, String(getAvgTemp(), 2) + String("C"));
+      Heltec.display->setFont(ArialMT_Plain_10);
+      Heltec.display->drawString(5, 40, buildTemperatureString());
+      Heltec.display->drawString(88, 40, buildVoltageString());
+      Heltec.display->display();
+    }
 }
 
 void readTemperatures(){ 
@@ -104,6 +130,21 @@ void loop()
 {
   sample_batt_level();
   readTemperatures();
+  if(screenMode == MODE_SCREEN_ON && screenModeChanged) {
+    Serial.print("Turning screen ON\n");
+    screenModeChanged = false;
+    // TODO: No idea how these should be used. Docs do not help.
+    Heltec.display->resetDisplay();
+    Heltec.display->init();
+    Heltec.display->displayOn();
+    Heltec.display->flipScreenVertically();
+  } else if(screenModeChanged) {
+    Serial.print("Turning screen OFF\n");
+    screenModeChanged = false;
+    Heltec.display->resetDisplay();
+    Heltec.display->sleep();
+    Heltec.display->displayOff();
+  }
   draw();
   delay(2000);
 }
