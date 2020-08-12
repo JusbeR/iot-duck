@@ -12,7 +12,7 @@
 
 #define ONE_WIRE_BUS 17
 #define NO_OF_TEMP_SENSORS 3
-#define BUTTON_PIN 0
+#define BUTTON_PIN 18
 #define MODE_SCREEN_OFF 0
 #define MODE_SCREEN_ON  1
 #define MODE_DEFAULT     MODE_SCREEN_ON
@@ -61,8 +61,9 @@ void setup()
   Heltec.display->flipScreenVertically();
   Heltec.display->setFont(ArialMT_Plain_10);
 
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPressed, RISING);
+  // Button is broken
+  //pinMode(BUTTON_PIN, INPUT_PULLUP);
+  //attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPressed, RISING);
 }
 
 float getAvgTemp() {
