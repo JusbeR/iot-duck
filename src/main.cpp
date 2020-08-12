@@ -46,6 +46,14 @@ void printAddress(DeviceAddress deviceAddress) {
 }
 
 void buttonPressed() {
+  Serial.println("Button pressed");
+  /*detachInterrupt(BUTTON_PIN);
+  delay(100);
+  int state = digitalRead(BUTTON_PIN);
+  Serial.printf("State=%d\n", state);
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPressed, FALLING);*/
+  esp_deep_sleep_start();
+  /*
   Serial.printf("MODE=%u\n", screenMode);
   if(screenMode == MODE_SCREEN_ON) {
     Serial.print("Setting screen mode OFF\n");
@@ -55,7 +63,7 @@ void buttonPressed() {
     Serial.print("Setting screen mode ON\n");
     screenMode = MODE_SCREEN_ON;
     screenModeChanged = true;
-  }
+  }*/
 }
 
 void setup()
@@ -71,8 +79,8 @@ void setup()
   Heltec.display->setFont(ArialMT_Plain_10);
 
   // Button is broken
-  //pinMode(BUTTON_PIN, INPUT_PULLUP);
-  //attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPressed, RISING);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPressed, FALLING);
   sample_batt_level();
 }
 
