@@ -19,7 +19,6 @@ static void append_to_history(int32_t voltage) {
     batt_voltage_index++;
     if(batt_voltage_index >= BATT_HISTORY_COUNT) {
         batt_voltage_index = 0;
-        average_ready = true;
     }
     if(!initialized) {
       initialized = true;
@@ -43,6 +42,3 @@ int32_t get_avg_batt_voltage() {
   return res/BATT_HISTORY_COUNT;
 }
 
-bool is_avg_batt_voltage_ready() {
-  return average_ready;
-}

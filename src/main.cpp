@@ -17,11 +17,15 @@
 #define MODE_SCREEN_ON  1
 #define MODE_DEFAULT     MODE_SCREEN_ON
 
+#define READ_BATT_TIME_MS (10*1000)
+#define LOOP_TIME (2*1000)
+#define SKIP_BATT_READINGS (READ_BATT_TIME_MS/LOOP_TIME)
 // Sensors are always read in same order and this list
 // puts them so that bottom sensor is always in the first place
 // and top sensor in last
 uint8_t sensor_index_to_disp_index[3] = {1,2,0};
 
+static int skip_batt_reading_counter = 0;
 static volatile uint8_t screenMode;
 static volatile bool screenModeChanged;
 float temperatures[NO_OF_TEMP_SENSORS];
@@ -64,6 +68,7 @@ void setup()
   // Button is broken
   //pinMode(BUTTON_PIN, INPUT_PULLUP);
   //attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPressed, RISING);
+  sample_batt_level();
 }
 
 float getAvgTemp() {
@@ -84,10 +89,7 @@ String buildTemperatureString(){
 }
 
 String buildVoltageString(){
-  if(is_avg_batt_voltage_ready()) {
-    return String(get_avg_batt_voltage()) + "mV";
-  }
-  return String("????mV");
+  return String(get_avg_batt_voltage()) + "mV";
 }
 
 void draw() {
@@ -129,7 +131,10 @@ void readTemperatures(){
 
 void loop()
 {
-  sample_batt_level();
+  if(skip_batt_reading_counter++ >= SKIP_BATT_READINGS) {
+    skip_batt_reading_counter = 0;
+    sample_batt_level();
+  }
   readTemperatures();
   if(screenMode == MODE_SCREEN_ON && screenModeChanged) {
     Serial.print("Turning screen ON\n");
