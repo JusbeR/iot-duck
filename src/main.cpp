@@ -17,7 +17,7 @@
 #define MODE_SCREEN_ON  1
 #define MODE_DEFAULT     MODE_SCREEN_ON
 
-#define READ_BATT_TIME_MS (10*1000)
+#define READ_BATT_TIME_MS (30*1000)
 #define LOOP_TIME (2*1000)
 #define SKIP_BATT_READINGS (READ_BATT_TIME_MS/LOOP_TIME)
 // Sensors are always read in same order and this list

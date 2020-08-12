@@ -1,12 +1,11 @@
 #include <Arduino.h>
 
-#define BATT_HISTORY_COUNT 10
+#define BATT_HISTORY_COUNT 3
 #define BATT_SENSE_PIN 36
 
 static int32_t batt_voltage_array[BATT_HISTORY_COUNT];
 static int32_t batt_voltage_index = 0;
 static bool initialized = false;
-static bool average_ready = false;
 
 static void init_empty_slots(int32_t voltage) {
   for(int i = 0; i < BATT_HISTORY_COUNT; i++) {
